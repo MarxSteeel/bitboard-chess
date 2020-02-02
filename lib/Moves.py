@@ -26,35 +26,36 @@ class Moves(object):
             "empty": ~(board.pieces["WR"] | board.pieces["WN"] | board.pieces["WB"] | 
                 board.pieces["WQ"] | board.pieces["WK"] | board.pieces["WP"] | 
                 board.pieces["BR"] | board.pieces["BN"] | board.pieces["BB"] |
-                board.pieces["BQ"] | board.pieces["BK"] | board.pieces["BP"])
+                board.pieces["BQ"] | board.pieces["BK"] | board.pieces["BP"]), 
+            "pieces": board.pieces
         }
 
-    def white_pawn_moves(self, pawn):
+    def white_pawn_moves(self, pawn, history=None):
         moves_list = ""
         all = self.utilities
         # Common movement, x1x2y1y2
-        pawn_moves = (pawn >> 7) & all["black_pieces"] & ~all["rank_8"] & ~all["file_a"] # Capture right
+        pawn_moves = (pawn >> 7) & all["black_pieces"] & ~all["rank_8"] & ~all["file_a"]  # Capture right
         possibility = pawn_moves & ~(pawn_moves - 1)
         while(possibility != 0):
             i = trailing_zeros(bin(pawn_moves))
             moves_list += str(i//8 + 1) + str(i%8 - 1) + str(i//8) + str(i%8)
             pawn_moves &= ~possibility
             possibility = pawn_moves & ~(pawn_moves - 1)
-        pawn_moves = (pawn >> 9) & all["black_pieces"] & ~all["rank_8"] & ~all["file_h"] # Capture left
+        pawn_moves = (pawn >> 9) & all["black_pieces"] & ~all["rank_8"] & ~all["file_h"]  # Capture left
         possibility = pawn_moves & ~(pawn_moves - 1)
         while(possibility != 0):
             i = trailing_zeros(bin(pawn_moves))
             moves_list += str(i//8 + 1) + str(i%8 + 1) + str(i//8) + str(i%8)
             pawn_moves &= ~possibility
             possibility = pawn_moves & ~(pawn_moves - 1)
-        pawn_moves = (pawn >> 8) & all["empty"] & ~all["rank_8"] # Simple move
+        pawn_moves = (pawn >> 8) & all["empty"] & ~all["rank_8"]  # Simple move
         possibility = pawn_moves & ~(pawn_moves - 1)
         while(possibility != 0):
             i = trailing_zeros(bin(pawn_moves))
             moves_list += str(i//8 + 1) + str(i%8) + str(i//8) + str(i%8)
             pawn_moves &= ~possibility
             possibility = pawn_moves & ~(pawn_moves - 1)
-        pawn_moves = (pawn >> 16) & all["empty"] & ~all["rank_8"] & all["rank_4"] # Double move
+        pawn_moves = (pawn >> 16) & all["empty"] & ~all["rank_8"] & all["rank_4"]  # Double move
         possibility = pawn_moves & ~(pawn_moves - 1)
         while(possibility != 0):
             i = trailing_zeros(bin(pawn_moves))
@@ -62,7 +63,7 @@ class Moves(object):
             pawn_moves &= ~possibility
             possibility = pawn_moves & ~(pawn_moves - 1)
         # Promotion y1y2
-        pawn_moves = (pawn >> 7) & all["black_pieces"] & all["rank_8"] & ~all["file_a"] # Capture right and promotion
+        pawn_moves = (pawn >> 7) & all["black_pieces"] & all["rank_8"] & ~all["file_a"]  # Capture right and promotion
         possibility = pawn_moves & ~(pawn_moves - 1)
         while(possibility != 0):
             i = trailing_zeros(bin(pawn_moves))
@@ -70,7 +71,7 @@ class Moves(object):
             + "RP" + str(i%8 - 1) + str(i%8) + "NP" + str(i%8 - 1) + str(i%8) + "BP"
             pawn_moves &= ~possibility
             possibility = pawn_moves & ~(pawn_moves - 1)
-        pawn_moves = (pawn >> 9) & all["black_pieces"] & all["rank_8"] & ~all["file_h"] # Capture left and promotion
+        pawn_moves = (pawn >> 9) & all["black_pieces"] & all["rank_8"] & ~all["file_h"]  # Capture left and promotion
         possibility = pawn_moves & ~(pawn_moves - 1)
         while(possibility != 0):
             i = trailing_zeros(bin(pawn_moves))
@@ -78,7 +79,7 @@ class Moves(object):
             + "RP" + str(i%8 + 1) + str(i%8) + "NP" + str(i%8 + 1) + str(i%8) + "BP"
             pawn_moves &= ~possibility
             possibility = pawn_moves & ~(pawn_moves - 1)
-        pawn_moves = (pawn >> 8) & all["empty"] & all["rank_8"] # Simple move and promotion
+        pawn_moves = (pawn >> 8) & all["empty"] & all["rank_8"]  # Simple move and promotion
         possibility = pawn_moves & ~(pawn_moves - 1)
         while(possibility != 0):
             i = trailing_zeros(bin(pawn_moves))
@@ -86,4 +87,16 @@ class Moves(object):
             + "RP" + str(i%8) + str(i%8) + "NP" + str(i%8) + str(i%8) + "BP"
             pawn_moves &= ~possibility
             possibility = pawn_moves & ~(pawn_moves - 1)
+        # En Passant y1y2
+        if history:
+            if (history[-1][0] == "BP") and (int(history[-1][-1][2]) - int(history[-1][-1][0]) == 2):
+                pawn_move = (pawn << 1) & all["pieces"]["BP"] & all["rank_5"] & ~all["file_a"]  # Capture right
+                if pawn_move != 0:
+                    i = trailing_zeros(bin(pawn_move))
+                    moves_list += str(i%8 - 1) + str(i%8) + "E"
+                pawn_move = (pawn >> 1) & all["pieces"]["BP"] & all["rank_5"] & ~all["file_h"]  # Capture left
+                if pawn_move != 0:
+                    i = trailing_zeros(bin(pawn_move))
+                    moves_list += str(i%8 + 1) + str(i%8) + "E"
         return moves_list
+
