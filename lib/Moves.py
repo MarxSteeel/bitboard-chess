@@ -119,13 +119,64 @@ class Moves(object):
                     moves_list += str(i%8 + 1) + str(i%8) + "E"
         return moves_list
 
+    def white_bishop_moves(self, bishop):
+        moves_list = ""
+        all = self.utilities
+        i = bishop & ~(bishop - 1)
+        while i != 0:
+            bishop_spot = trailing_zeros(bin(i))
+            bishop_moves = self.diag_moves(bishop_spot) & all["not_white_pieces"]
+            j = bishop_moves & ~(bishop_moves - 1)
+            while j != 0:
+                index = trailing_zeros(bin(j))
+                moves_list += str(bishop_spot // 8) + str(bishop_spot % 8) + str(index // 8) + str(index % 8)
+                bishop_moves &= ~j
+                j = bishop_moves & ~(bishop_moves - 1)
+            bishop &= ~i
+            i = bishop & ~(bishop - 1)
+        return moves_list
+
+    def white_rook_moves(self, rook):
+        moves_list = ""
+        all = self.utilities
+        i = rook & ~(rook - 1)
+        while i != 0:
+            rook_spot = trailing_zeros(bin(i))
+            rook_moves = self.hv_moves(rook_spot) & all["not_white_pieces"]
+            j = rook_moves & ~(rook_moves - 1)
+            while j != 0:
+                index = trailing_zeros(bin(j))
+                moves_list += str(rook_spot // 8) + str(rook_spot % 8) + str(index // 8) + str(index % 8)
+                rook_moves &= ~j
+                j = rook_moves & ~(rook_moves - 1)
+            rook &= ~i
+            i = rook & ~(rook - 1)
+        return moves_list
+
+    def white_queen_moves(self, queen):
+        moves_list = ""
+        all = self.utilities
+        i = queen & ~(queen - 1)
+        while i != 0:
+            queen_spot = trailing_zeros(bin(i))
+            queen_moves = (self.hv_moves(queen_spot) | self.diag_moves(queen_spot)) & all["not_white_pieces"]
+            j = queen_moves & ~(queen_moves - 1)
+            while j != 0:
+                index = trailing_zeros(bin(j))
+                moves_list += str(queen_spot // 8) + str(queen_spot % 8) + str(index // 8) + str(index % 8)
+                queen_moves &= ~j
+                j = queen_moves & ~(queen_moves - 1)
+            queen &= ~i
+            i = queen & ~(queen - 1)
+        return moves_list
+
     def hv_moves(self, spot):
         all = self.utilities
         binary_s = 1 << spot
         horizontal_moves = (all["occupied"] - 2*binary_s) ^ (reverse(reverse(all["occupied"]) - 2 * reverse(binary_s)))
         vertical_moves = ((all["occupied"] & all["file_masks"][spot % 8]) - (2*binary_s)) ^ \
             (reverse(reverse(all["occupied"] & all["file_masks"][spot % 8]) - 2 * reverse(binary_s)))
-        return bin((horizontal_moves & all["rank_masks"][spot//8]) | (vertical_moves & all["file_masks"][spot%8]))
+        return (horizontal_moves & all["rank_masks"][spot//8]) | (vertical_moves & all["file_masks"][spot%8])
 
     def diag_moves(self, spot):
         all = self.utilities
@@ -134,4 +185,4 @@ class Moves(object):
             (reverse(reverse(all["occupied"] & all["diagonal_masks"][spot // 8 + spot % 8]) - 2 * reverse(binary_s)))
         anti_diagonal_moves = ((all["occupied"] & all["anti_diagonal_masks"][(spot // 8 + 7) - spot % 8]) - (2*binary_s)) ^ \
             (reverse(reverse(all["occupied"] & all["diagonal_masks"][(spot // 8 + 7) - spot % 8]) - 2 * reverse(binary_s)))
-        return bin((diagonal_moves & all["diagonal_masks"][spot//8 + spot%8]) | (anti_diagonal_moves & all["anti_diagonal_masks"][(spot//8 + 7) - spot%8]))
+        return (diagonal_moves & all["diagonal_masks"][spot//8 + spot%8]) | (anti_diagonal_moves & all["anti_diagonal_masks"][(spot//8 + 7) - spot%8])
